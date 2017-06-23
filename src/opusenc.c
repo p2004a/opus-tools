@@ -69,6 +69,7 @@
 #include "opusenc.h"
 #include "diag_range.h"
 #include "cpusupport.h"
+#include "metadata_file.h"
 
 #ifdef VALGRIND
 #include <valgrind/memcheck.h>
@@ -149,6 +150,8 @@ void usage(void)
   printf(" --comment tag=val  Add the given string as an extra comment\n");
   printf("                      This may be used multiple times\n");
   printf(" --picture file     Attach album art (see --help-picture)\n");
+  printf("                      This may be used multiple times\n");
+  printf(" --metadata-file    File with additional medatada\n");
   printf("                      This may be used multiple times\n");
   printf(" --padding n        Reserve n extra bytes for metadata (default: 512)\n");
   printf(" --discard-comments Don't keep metadata when transcoding\n");
@@ -282,6 +285,7 @@ int main(int argc, char **argv)
     {"genre", required_argument, NULL, 0},
     {"picture", required_argument, NULL, 0},
     {"padding", required_argument, NULL, 0},
+    {"metadata-file", required_argument, NULL, 0},
     {"discard-comments", no_argument, NULL, 0},
     {"discard-pictures", no_argument, NULL, 0},
     {0, 0, 0, 0}
@@ -572,6 +576,22 @@ int main(int argc, char **argv)
           free(picture_data);
         } else if(strcmp(long_options[option_index].name,"padding")==0){
           comment_padding=atoi(optarg);
+        } else if(strcmp(long_options[option_index].name,"metadata-file")==0){
+          const char *error_message;
+          metadata_elem *additional_metadata, *elem;
+
+          save_cmd = 0;
+          additional_metadata = parse_metadata_file(optarg, &error_message);
+          if (additional_metadata == NULL) {
+            fprintf(stderr,"Error when processing medatada file option: %s\n",
+                    error_message);
+            exit(1);
+          }
+          for (elem = additional_metadata; elem->tag != NULL; ++elem) {
+            comment_add(&inopt.comments,&inopt.comments_length,
+                        elem->tag, elem->val);
+          }
+          free_metadata_list(additional_metadata);
         } else if(strcmp(long_options[option_index].name,"discard-comments")==0){
           inopt.copy_comments=0;
           inopt.copy_pictures=0;

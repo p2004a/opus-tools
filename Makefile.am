@@ -16,6 +16,7 @@ noinst_HEADERS = src/arch.h \
                  src/flac.h \
                  src/info_opus.h \
                  src/lpc.h \
+                 src/metadata_file.h \
                  src/opusenc.h \
                  src/opus_header.h \
                  src/opusinfo.h \
@@ -54,7 +55,7 @@ dist_man_MANS = man/opusenc.1 man/opusdec.1 man/opusinfo.1
 
 resampler_CPPFLAGS = -DSPX_RESAMPLE_EXPORT= -DRANDOM_PREFIX=opustools -DOUTSIDE_SPEEX -DFLOATING_POINT
 
-opusenc_SOURCES = src/opus_header.c src/opusenc.c src/picture.c src/resample.c src/audio-in.c src/diag_range.c src/flac.c src/lpc.c win32/unicode_support.c
+opusenc_SOURCES = src/opus_header.c src/opusenc.c src/picture.c src/resample.c src/audio-in.c src/diag_range.c src/flac.c src/lpc.c src/metadata_file.c src/utf8.c win32/unicode_support.c
 opusenc_CPPFLAGS = $(AM_CPPFLAGS) $(resampler_CPPFLAGS)
 opusenc_CFLAGS = $(AM_CFLAGS) $(FLAC_CFLAGS)
 opusenc_LDADD = $(OPUS_LIBS) $(FLAC_LIBS) $(OGG_LIBS) $(LIBM)
