@@ -25,6 +25,7 @@ noinst_HEADERS = src/arch.h \
                  src/speex_resampler.h \
                  src/stack_alloc.h \
                  win32/unicode_support.h \
+                 src/utf8.h \
                  src/cpusupport.h \
                  src/wave_out.h \
                  src/wav_io.h
@@ -64,7 +65,7 @@ opusdec_CPPFLAGS = $(AM_CPPFLAGS) $(resampler_CPPFLAGS)
 opusdec_LDADD = $(OPUS_LIBS) $(OGG_LIBS) $(LIBM)
 opusdec_MANS = man/opusdec.1
 
-opusinfo_SOURCES = src/opus_header.c src/opusinfo.c src/info_opus.c src/picture.c win32/unicode_support.c
+opusinfo_SOURCES = src/opus_header.c src/opusinfo.c src/info_opus.c src/picture.c src/utf8.c win32/unicode_support.c
 opusinfo_CPPFLAGS = $(AM_CPPFLAGS) -DOPUSTOOLS
 opusinfo_LDADD = $(OGG_LIBS)
 opusinfo_MANS = man/opusinfo.1

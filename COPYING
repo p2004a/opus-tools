@@ -1,6 +1,6 @@
 
-Opus-tools, with the exception of opusinfo.[ch] is available under
-the following two clause BSD-style license:
+Opus-tools, with the exception of opusinfo.[ch] and utf8.c is available
+under the following two clause BSD-style license:
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions

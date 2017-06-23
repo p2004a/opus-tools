@@ -31,6 +31,7 @@
 #include "opus_header.h"
 #include "info_opus.h"
 #include "picture.h"
+#include "utf8.h"
 
 #if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
 # include "unicode_support.h"
@@ -107,9 +108,6 @@ void check_xiph_comment(stream_processor *stream, int i, const char *comment,
     char *sep = strchr(comment, '=');
     int j;
     int broken = 0;
-    unsigned char *val;
-    int bytes;
-    int remaining;
 
     if(sep == NULL) {
         oi_warn(_("WARNING: Comment %d in stream %d has invalid "
@@ -131,128 +129,12 @@ void check_xiph_comment(stream_processor *stream, int i, const char *comment,
     if(broken)
         return;
 
-    val = (unsigned char *)comment;
-
-    j = sep-comment+1;
-    while(j < comment_length)
-    {
-        remaining = comment_length - j;
-        if((val[j] & 0x80) == 0)
-            bytes = 1;
-        else if((val[j] & 0x40) == 0x40) {
-            if((val[j] & 0x20) == 0)
-                bytes = 2;
-            else if((val[j] & 0x10) == 0)
-                bytes = 3;
-            else if((val[j] & 0x08) == 0)
-                bytes = 4;
-            else if((val[j] & 0x04) == 0)
-                bytes = 5;
-            else if((val[j] & 0x02) == 0)
-                bytes = 6;
-            else {
-                oi_warn(_("WARNING: Illegal UTF-8 sequence in "
-                    "comment %d (stream %d): length marker wrong\n"),
-                    i, stream->num);
-                broken = 1;
-                break;
-            }
-        }
-        else {
-            oi_warn(_("WARNING: Illegal UTF-8 sequence in comment "
-                "%d (stream %d): length marker wrong\n"), i, stream->num);
-            broken = 1;
-            break;
-        }
-
-        if(bytes > remaining) {
-            oi_warn(_("WARNING: Illegal UTF-8 sequence in comment "
-                "%d (stream %d): too few bytes\n"), i, stream->num);
-            broken = 1;
-            break;
-        }
-
-        switch(bytes) {
-            case 1:
-                /* No more checks needed */
-                break;
-            case 2:
-                if((val[j+1] & 0xC0) != 0x80)
-                    broken = 1;
-                if((val[j] & 0xFE) == 0xC0)
-                    broken = 1;
-                break;
-            case 3:
-                if(!((val[j] == 0xE0 && val[j+1] >= 0xA0 && val[j+1] <= 0xBF &&
-                         (val[j+2] & 0xC0) == 0x80) ||
-                     (val[j] >= 0xE1 && val[j] <= 0xEC &&
-                         (val[j+1] & 0xC0) == 0x80 &&
-                         (val[j+2] & 0xC0) == 0x80) ||
-                     (val[j] == 0xED && val[j+1] >= 0x80 &&
-                         val[j+1] <= 0x9F &&
-                         (val[j+2] & 0xC0) == 0x80) ||
-                     (val[j] >= 0xEE && val[j] <= 0xEF &&
-                         (val[j+1] & 0xC0) == 0x80 &&
-                         (val[j+2] & 0xC0) == 0x80)))
-                     broken = 1;
-                 if(val[j] == 0xE0 && (val[j+1] & 0xE0) == 0x80)
-                     broken = 1;
-                 break;
-            case 4:
-                 if(!((val[j] == 0xF0 && val[j+1] >= 0x90 &&
-                         val[j+1] <= 0xBF &&
-                         (val[j+2] & 0xC0) == 0x80 &&
-                         (val[j+3] & 0xC0) == 0x80) ||
-                     (val[j] >= 0xF1 && val[j] <= 0xF3 &&
-                         (val[j+1] & 0xC0) == 0x80 &&
-                         (val[j+2] & 0xC0) == 0x80 &&
-                         (val[j+3] & 0xC0) == 0x80) ||
-                     (val[j] == 0xF4 && val[j+1] >= 0x80 &&
-                         val[j+1] <= 0x8F &&
-                         (val[j+2] & 0xC0) == 0x80 &&
-                         (val[j+3] & 0xC0) == 0x80)))
-                     broken = 1;
-                 if(val[j] == 0xF0 && (val[j+1] & 0xF0) == 0x80)
-                     broken = 1;
-                 break;
-             /* 5 and 6 aren't actually allowed at this point */
-             case 5:
-                 broken = 1;
-                 break;
-             case 6:
-                 broken = 1;
-                 break;
-         }
-
-         if(broken) {
-             char *simple = malloc (comment_length + 1);
-             char *seq = malloc (comment_length * 3 + 1);
-             static char hex[] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                                  '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-             int k, c1 = 0, c2 = 0;
-             for (k = 0; k < comment_length; k++) {
-               seq[c1++] = hex[((unsigned char)comment[k]) >> 4];
-               seq[c1++] = hex[((unsigned char)comment[k]) & 0xf];
-               seq[c1++] = ' ';
-
-               if(comment[k] < 0x20 || comment[k] > 0x7D)
-                 simple[c2++] = '?';
-               else
-                 simple[c2++] = comment[k];
-             }
-             seq[c1] = 0;
-             simple[c2] = 0;
-             oi_warn(_("WARNING: Illegal UTF-8 sequence in comment "
-                   "%d (stream %d): invalid sequence \"%s\": %s\n"), i,
-                   stream->num, simple, seq);
-             broken = 1;
-             free (simple);
-             free (seq);
-             break;
-         }
-
-         j += bytes;
-     }
+    if (!is_valid_utf8(sep + 1, comment_length - (sep-comment+1))) {
+        oi_warn(_("WARNING: Illegal UTF-8 sequence in "
+                  "comment %d (stream %d): %s\n"),
+                i, stream->num, utf8_error_message);
+        broken = 1;
+    }
 
      if(sep - comment == 22
            && oi_strncasecmp(comment, "METADATA_BLOCK_PICTURE", 22) == 0) {

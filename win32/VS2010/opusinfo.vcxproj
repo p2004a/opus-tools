@@ -30,6 +30,7 @@
     <ClCompile Include="..\..\src\opus_header.c" />
     <ClCompile Include="..\..\src\picture.c" />
     <ClCompile Include="..\..\src\resample.c" />
+    <ClCompile Include="..\..\src\utf8.c" />
     <ClCompile Include="..\..\src\wave_out.c" />
     <ClCompile Include="..\..\src\wav_io.c" />
     <ClCompile Include="..\..\win32\unicode_support.c" />
@@ -48,6 +49,7 @@
     <ClInclude Include="..\..\src\resample_sse.h" />
     <ClInclude Include="..\..\src\speex_resampler.h" />
     <ClInclude Include="..\..\src\stack_alloc.h" />
+    <ClInclude Include="..\..\src\utf8.h" />
     <ClInclude Include="..\..\src\wave_out.h" />
     <ClInclude Include="..\..\src\wav_io.h" />
     <ClInclude Include="..\..\win32\config.h" />
